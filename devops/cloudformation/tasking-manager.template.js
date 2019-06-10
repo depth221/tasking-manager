@@ -69,6 +69,10 @@ const Parameters = {
     Description: 'TM_SMTP_PORT environment variable',
     Type: 'String'
   },
+  TaskingManagerDefaultChangesetComment: {
+    Description: 'TM_DEFAULT_CHANGESET_COMMENT environment variable',
+    Type: 'String'
+  },
   TaskingManagerLogDirectory: {
     Description: 'TM_LOG_DIR environment variable',
     Type: 'String'
@@ -94,7 +98,8 @@ const Parameters = {
 
 const Conditions = {
   UseASnapshot: cf.notEquals(cf.ref('DBSnapshot'), ''),
-  DatabaseDumpFileGiven: cf.notEquals(cf.ref('DatabaseDump'), '')
+  DatabaseDumpFileGiven: cf.notEquals(cf.ref('DatabaseDump'), ''),
+  IsTaskingManagerProduction: cf.equals(cf.stackName, 'tasking-manager-production')
 };
 
 const Resources = {
@@ -104,9 +109,9 @@ const Resources = {
     Properties: {
       AutoScalingGroupName: cf.stackName,
       Cooldown: 300,
-      MinSize: 1,
-      DesiredCapacity: 1,
-      MaxSize: 1,
+      MinSize: cf.if('IsTaskingManagerProduction', 3, 1),
+      DesiredCapacity: cf.if('IsTaskingManagerProduction', 3, 1),
+      MaxSize: cf.if('IsTaskingManagerProduction', 12, 1),
       HealthCheckGracePeriod: 300,
       LaunchConfigurationName: cf.ref('TaskingManagerLaunchConfiguration'),
       TargetGroupARNs: [ cf.ref('TaskingManagerTargetGroup') ],
@@ -211,6 +216,7 @@ const Resources = {
         cf.sub('export TM_SMTP_PASSWORD="${TaskingManagerSMTPPassword}"'),
         cf.sub('export TM_SMTP_PORT="${TaskingManagerSMTPPort}"'),
         cf.sub('export TM_SMTP_USER="${TaskingManagerSMTPUser}"'),
+        cf.sub('export TM_DEFAULT_CHANGESET_COMMENT="${TaskingManagerDefaultChangesetComment}"'),
         cf.if('DatabaseDumpFileGiven', cf.sub('aws s3 cp ${DatabaseDump} dump.sql; sudo -u postgres psql "postgresql://$POSTGRES_USER:$POSTGRES_PASSWORD@$POSTGRES_ENDPOINT/$POSTGRES_DB" < dump.sql'), ''),
         './venv/bin/python3.6 manage.py db upgrade',
         'cd client/',
@@ -418,7 +424,7 @@ const Resources = {
         AllocatedStorage: cf.ref('DatabaseSize'),
         BackupRetentionPeriod: 10,
         StorageType: 'gp2',
-        DBInstanceClass: 'db.m3.large', //rethink here
+        DBInstanceClass: cf.if('IsTaskingManagerProduction', 'db.m3.large', 'db.t2.small'),
         DBSnapshotIdentifier: cf.if('UseASnapshot', cf.ref('DBSnapshot'), cf.noValue),
         VPCSecurityGroups: [cf.importValue(cf.join('-', ['hotosm-network-production', cf.ref('Environment'), 'ec2s-security-group', cf.region]))],
     }
