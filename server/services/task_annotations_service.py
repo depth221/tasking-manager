@@ -13,7 +13,8 @@ class TaskAnnotationsService:
 
         task_id = annotation['taskId']
         source = annotation['annotationSource'] if 'annotationSource' in annotation.keys() else None
-        task_annotation = TaskAnnotation(task_id, project_id, annotation_type, source, annotation['properties'])
+        markdown = annotation['annotationMarkdown'] if 'annotationMarkdown' in annotation.keys() else None
+        task_annotation = TaskAnnotation(task_id, project_id, annotation_type, source, markdown, annotation['properties'])
 
         # check if the task has this annotation_type
         existing_annotation = TaskAnnotation.get_task_annotation(task_id, project_id, annotation_type)
