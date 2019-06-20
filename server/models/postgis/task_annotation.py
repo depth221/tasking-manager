@@ -19,7 +19,7 @@ class TaskAnnotation(db.Model):
     __table_args__ = (
         db.ForeignKeyConstraint([task_id, project_id], ['tasks.id', 'tasks.project_id'], name='fk_task_annotations'), db.Index('idx_task_annotations_composite', 'task_id', 'project_id'), {})
 
-    def __init__(self, task_id, project_id, annotation_type, annotation_source=None, annotation_markdown=None, properties):
+    def __init__(self, task_id, project_id, annotation_type, properties, annotation_source=None, annotation_markdown=None):
         self.task_id = task_id
         self.project_id = project_id
         self.annotation_type = annotation_type
