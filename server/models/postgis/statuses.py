@@ -67,6 +67,13 @@ class ValidatingNotAllowed(Enum):
     PROJECT_NOT_PUBLISHED = 103
 
 
+class UserValidatorRoleRequestStatus(Enum):
+    """ Describes if a validation form is ready to be reviewd, accepted or denied """
+    READY = 0
+    ACCEPT = 1
+    DENY = 2
+
+
 class UserRole(Enum):
     """ Describes the role a user can be assigned, app doesn't support multiple roles """
     READ_ONLY = -1
